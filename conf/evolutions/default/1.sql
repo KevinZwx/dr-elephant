@@ -39,6 +39,7 @@ CREATE TABLE yarn_app_result (
   flow_exec_url    VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A url to the flow execution on the scheduler',
   job_def_url      VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A url to the job definition on the scheduler',
   flow_def_url     VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A url to the flow definition on the scheduler',
+  state            VARCHAR(20)   DEFAULT ''   COMMENT 'The application state',
 
   PRIMARY KEY (id)
 );
@@ -77,6 +78,8 @@ CREATE TABLE yarn_app_heuristic_result_details (
 );
 
 create index yarn_app_heuristic_result_details_i1 on yarn_app_heuristic_result_details (name);
+
+
 
 # --- !Downs
 

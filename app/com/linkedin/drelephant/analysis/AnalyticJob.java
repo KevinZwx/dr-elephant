@@ -46,6 +46,30 @@ public class AnalyticJob {
   private String _trackingUrl;
   private long _startTime;
   private long _finishTime;
+  private String _state;
+
+  /**
+   * Added by liban
+   * Returns the application state
+   * E.g., running, finished, or failed
+   *
+   * @return The application type
+   */
+  public String getState() {
+    return _state;
+  }
+
+  /**
+   * Added by liban
+   * Set the application type of this job.
+   *
+   * @param state The Application state
+   * @return The analytic job
+   */
+  public String setState(String state) {
+    _state = state;
+    return _state;
+  }
 
   /**
    * Returns the application type
@@ -149,6 +173,10 @@ public class AnalyticJob {
    * @return The analytic job
    */
   public String getAppId() {
+//     Added by liban. Append a suffix to ids of running applications
+//    if ("running".equalsIgnoreCase(getState())){
+//      return _appId + "-" + System.currentTimeMillis();
+//    }
     return _appId;
   }
 
@@ -227,6 +255,7 @@ public class AnalyticJob {
    * @return the analysed AppResult
    */
   public AppResult getAnalysis() throws Exception {
+    //根据任务类型获得相应的fetcher
     ElephantFetcher fetcher = ElephantContext.instance().getFetcherForApplicationType(getAppType());
     HadoopApplicationData data = fetcher.fetchData(this);
 

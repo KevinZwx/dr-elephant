@@ -16,23 +16,24 @@
 
 package models;
 
+import com.avaje.ebean.annotation.ConcurrencyMode;
+import com.avaje.ebean.annotation.EntityConcurrencyMode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
 
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import play.db.ebean.Model;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+
 
 @Entity
 @Table(name = "yarn_app_heuristic_result_details")
+@EntityConcurrencyMode(ConcurrencyMode.NONE)
 public class AppHeuristicResultDetails extends Model {
 
   private static final long serialVersionUID = 3L;
@@ -47,7 +48,9 @@ public class AppHeuristicResultDetails extends Model {
     public static final String NAME = "name";
     public static final String VALUE = "value";
     public static final String DETAILS = "details";
+//    public static final Timestamp LAST_UPDATE = Timestamp.valueOf("2016-09-14 17:57:06");
   }
+
 
   @JsonBackReference
   @ManyToOne(cascade = CascadeType.ALL)
@@ -61,4 +64,9 @@ public class AppHeuristicResultDetails extends Model {
 
   @Column(nullable = true)
   public String details;
+
+//  @Version
+//  @Column(columnDefinition = "timestamp default '2016-09-14 17:57:06'")
+//  public Timestamp lastUpdate;
+
 }

@@ -60,6 +60,9 @@ class SparkFSFetcher(fetcherConfData: FetcherConfigurationData) extends Elephant
   val DFS_HA_NAMENODES = "dfs.ha.namenodes";
   val DFS_NAMENODE_HTTP_ADDRESS = "dfs.namenode.http-address";
 
+  //Added by liban.
+  val IN_PROGRESS = ".inprogress"
+
   var confEventLogSizeInMb = defEventLogSizeInMb
   if (fetcherConfData.getParamMap.get(LOG_SIZE_XML_FIELD) != null) {
     val logLimitSize = Utils.getParam(fetcherConfData.getParamMap.get(LOG_SIZE_XML_FIELD), 1)
@@ -185,7 +188,11 @@ class SparkFSFetcher(fetcherConfData: FetcherConfigurationData) extends Elephant
   }
 
   def fetchData(analyticJob: AnalyticJob): SparkApplicationData = {
-    val appId = analyticJob.getAppId()
+
+    //Added by liban.
+    val state = analyticJob.getState()
+    val appId = if ("running".equalsIgnoreCase(state)) analyticJob.getAppId().split("-").head else analyticJob.getAppId()
+
     _security.doAs[SparkDataCollection](new PrivilegedAction[SparkDataCollection] {
       override def run(): SparkDataCollection = {
         /* Most of Spark logs will be in directory structure: /LOG_DIR/[application_id].
@@ -229,6 +236,7 @@ class SparkFSFetcher(fetcherConfData: FetcherConfigurationData) extends Elephant
         replayBus.addListener(storageListener)
 
         val logPath = new Path(_logDir, appId)
+        // log格式是否是1.2以前的,即根据application id存放在不同的目录中;是的话使用openLegacyEventLog读取;
         val logInput: InputStream =
           if (isLegacyLogDirectory(logPath)) {
             if (!shouldThrottle(logPath)) {
@@ -237,8 +245,10 @@ class SparkFSFetcher(fetcherConfData: FetcherConfigurationData) extends Elephant
               null
             }
           } else {
+            // 1.3以后log不放入单独的目录,而是存在相应的压缩文件中.首先获取配置的扩展名
             val sparkLogExt = Option(fetcherConfData.getParamMap.get(SPARK_LOG_EXT)).getOrElse(defSparkLogExt)
-            val logFilePath = new Path(logPath + sparkLogExt)
+            // Added by liban. For running applications read .inprogress eventLogs.
+            val logFilePath = if ("running".equalsIgnoreCase(state)) new Path(logPath + sparkLogExt + IN_PROGRESS) else new Path(logPath + sparkLogExt)
             if (!shouldThrottle(logFilePath)) {
               EventLoggingListener.openEventLog(logFilePath, fs)
             } else {
@@ -258,6 +268,7 @@ class SparkFSFetcher(fetcherConfData: FetcherConfigurationData) extends Elephant
         } else {
           logger.info("Replaying Spark logs for application: " + appId)
 
+          // replay会从输入流中读取eventLog,(每行对应一个事件),然后将json转化成event,发送给Listener上注册的所有Listener
           replayBus.replay(logInput, logPath.toString(), false)
 
           logger.info("Replay completed for application: " + appId)

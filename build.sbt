@@ -25,6 +25,7 @@ organization := "com.linkedin.drelephant"
 
 javacOptions in Compile ++= Seq("-source", "1.6", "-target", "1.6")
 
+
 libraryDependencies ++= dependencies
 
 // Create a new custom configuration called compileonly

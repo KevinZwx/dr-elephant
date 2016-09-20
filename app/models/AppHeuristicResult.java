@@ -16,17 +16,13 @@
 
 package models;
 
+import com.avaje.ebean.annotation.ConcurrencyMode;
+import com.avaje.ebean.annotation.EntityConcurrencyMode;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import java.util.List;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
 
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import java.sql.Timestamp;
+import java.util.List;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -38,6 +34,7 @@ import play.db.ebean.Model;
 
 @Entity
 @Table(name = "yarn_app_heuristic_result")
+@EntityConcurrencyMode(ConcurrencyMode.NONE)
 public class AppHeuristicResult extends Model {
 
   private static final long serialVersionUID = 2L;
@@ -53,6 +50,7 @@ public class AppHeuristicResult extends Model {
     public static final String SEVERITY = "severity";
     public static final String SCORE = "score";
     public static final String APP_HEURISTIC_RESULT_DETAILS = "yarnAppHeuristicResultDetails";
+//    public static final Timestamp LAST_UPDATE = Timestamp.valueOf("2016-09-14 17:57:06");
   }
 
   public static String getSearchFields() {
@@ -78,6 +76,10 @@ public class AppHeuristicResult extends Model {
 
   @Column(nullable = false)
   public int score;
+
+//  @Version
+//  @Column(columnDefinition = "timestamp default '2016-09-14 17:57:06'")
+//  public Timestamp lastUpdate;
 
   @JsonManagedReference
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "yarnAppHeuristicResult")

@@ -132,12 +132,21 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
     logger.info("Fetching recent finished application runs between last time: " + (_lastTime + 1)
         + ", and current time: " + _currentTime);
 
+    // Added by liban. Fetch all running apps
+    URL runningAppsURL = new URL(new URL("http://" + _resourceManagerAddress),
+            "/ws/v1/cluster/apps?state=running&applicationTypes=spark");
+    logger.info("The running apps URL is " + runningAppsURL);
+    List<AnalyticJob> runningApps = readApps(runningAppsURL);
+    logger.info("fetched " + runningApps.size() + " running apps.");
+    appList.addAll(runningApps);
+
     // Fetch all succeeded apps
     URL succeededAppsURL = new URL(new URL("http://" + _resourceManagerAddress), String.format(
             "/ws/v1/cluster/apps?finalStatus=SUCCEEDED&finishedTimeBegin=%s&finishedTimeEnd=%s",
             String.valueOf(_lastTime + 1), String.valueOf(_currentTime)));
     logger.info("The succeeded apps URL is " + succeededAppsURL);
     List<AnalyticJob> succeededApps = readApps(succeededAppsURL);
+    logger.info("fetched " + succeededApps.size() + " succeeded apps.");
     appList.addAll(succeededApps);
 
     // Fetch all failed apps
@@ -146,6 +155,7 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
             String.valueOf(_lastTime + 1), String.valueOf(_currentTime)));
     List<AnalyticJob> failedApps = readApps(failedAppsURL);
     logger.info("The failed apps URL is " + failedAppsURL);
+    logger.info("fetched " + failedApps.size() + " failed apps.");
     appList.addAll(failedApps);
 
     // Append promises from the retry queue at the end of the list
@@ -218,14 +228,18 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
         long startTime = app.get("startedTime").getLongValue();
         long finishTime = app.get("finishedTime").getLongValue();
 
+        // Added by liban.
+        String state = app.get("state").getValueAsText();
+
         ApplicationType type =
             ElephantContext.instance().getApplicationTypeForName(app.get("applicationType").getValueAsText());
 
         // If the application type is supported
+        // modified by liban to add state to analyticJob
         if (type != null) {
           AnalyticJob analyticJob = new AnalyticJob();
           analyticJob.setAppId(appId).setAppType(type).setUser(user).setName(name).setQueueName(queueName)
-              .setTrackingUrl(trackingUrl).setStartTime(startTime).setFinishTime(finishTime);
+              .setTrackingUrl(trackingUrl).setStartTime(startTime).setFinishTime(finishTime).setState(state);
 
           appList.add(analyticJob);
         }

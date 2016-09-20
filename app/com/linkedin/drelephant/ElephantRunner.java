@@ -174,8 +174,22 @@ public class ElephantRunner implements Runnable {
         String analysisName = String.format("%s %s", _analyticJob.getAppType().getName(), _analyticJob.getAppId());
         long analysisStartTimeMillis = System.currentTimeMillis();
         logger.info(String.format("Analyzing %s", analysisName));
+        // 对job进行分析
         AppResult result = _analyticJob.getAnalysis();
-        result.save();
+        // Added by liban. 对running application使用update,其他使用save
+//        if ("running".equalsIgnoreCase(_analyticJob.getState())){
+//          logger.info("update info of " + _analyticJob.getAppId());
+//          result.update(_analyticJob.getAppId());
+//
+//        }else {
+//          result.save();
+//        }
+        if (result.find.byId(_analyticJob.getAppId()) != null) {
+          logger.info("applications's info already exsits, update");
+          result.update();
+        }else {
+          result.save();
+        }
         long processingTime = System.currentTimeMillis() - analysisStartTimeMillis;
         logger.info(String.format("Analysis of %s took %sms", analysisName, processingTime));
         MetricsController.setJobProcessingTime(processingTime);
@@ -192,6 +206,8 @@ public class ElephantRunner implements Runnable {
         logger.error(ExceptionUtils.getStackTrace(e));
 
         if (_analyticJob != null && _analyticJob.retry()) {
+          // Added by liban.
+          logger.error("catched " + e.toString() + " exception: " + e.getMessage() + ", " + e.getCause());
           logger.error("Add analytic job id [" + _analyticJob.getAppId() + "] into the retry list.");
           _analyticJobGenerator.addIntoRetries(_analyticJob);
         } else {

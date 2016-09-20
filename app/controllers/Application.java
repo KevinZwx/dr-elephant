@@ -131,15 +131,19 @@ public class Application extends Controller {
 
     // Update statistics only after FETCH_DELAY
     if (now - _lastFetch > FETCH_DELAY) {
-      _numJobsAnalyzed = AppResult.find.where().gt(AppResult.TABLE.FINISH_TIME, finishDate).findRowCount();
+      _numJobsAnalyzed = AppResult.find.where().gt(AppResult.TABLE.FINISH_TIME, finishDate).findRowCount()
+              + AppResult.find.where().eq(AppResult.TABLE.STATE, "running").findRowCount();
       _numJobsCritical = AppResult.find.where()
           .gt(AppResult.TABLE.FINISH_TIME, finishDate)
           .eq(AppResult.TABLE.SEVERITY, Severity.CRITICAL.getValue())
           .findRowCount();
+//          + AppResult.find.where().eq(AppResult.TABLE.STATE, "running").eq(AppResult.TABLE.SEVERITY, Severity.CRITICAL.getValue()).findRowCount();;
+
       _numJobsSevere = AppResult.find.where()
           .gt(AppResult.TABLE.FINISH_TIME, finishDate)
           .eq(AppResult.TABLE.SEVERITY, Severity.SEVERE.getValue())
           .findRowCount();
+//          + AppResult.find.where().eq(AppResult.TABLE.STATE, "running").eq(AppResult.TABLE.SEVERITY, Severity.SEVERE.getValue()).findRowCount();;
       _lastFetch = now;
     }
 
@@ -152,6 +156,16 @@ public class Application extends Controller {
         .setMaxRows(50)
         .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS, AppHeuristicResult.getSearchFields())
         .findList();
+
+    // Added by liban. Fetched reuqired fields for running jobs ordered by start time up to a max of 50 jobs
+//    results.addAll(AppResult.find.select(AppResult.getSearchFields())
+//        .where()
+//        .eq(AppResult.TABLE.START_TIME, "running")
+//        .order()
+//        .desc(AppResult.TABLE.START_TIME)
+//        .setMaxRows(50)
+//        .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS, AppHeuristicResult.getSearchFields())
+//        .findList());
 
     return ok(homePage.render(_numJobsAnalyzed, _numJobsSevere, _numJobsCritical,
         searchResults.render("Latest analysis", results)));
